@@ -1,99 +1,36 @@
-// function to fetch data from the movie api through axios which also format our search strings.
-
-const fetchData = async (searchTerm) => {
-	const response = await axios.get('https://omdbapi.com/', {
-		params: {
-			apikey: '7efb4270',
-			s: searchTerm
-		}
-	});
-
-	// if the response has an error, return an empty array.
-
-	if (response.data.Error) {
-		return [];
-	}
-	// if no error, return the Search response.
-	return response.data.Search;
-};
-
-const root = document.querySelector('.autocomplete');
-root.innerHTML = `
-    <label><b>Search for a Movie</b></label>
-    <input class="input" />
-    <div class="dropdown">
-        <div class="dropdown-menu">
-            <div class="dropdown-content results"></div>
-        </div>
-    </div>
-`;
-
-const input = document.querySelector('input');
-const results = document.querySelector('.results');
-const dropdown = document.querySelector('.dropdown');
-
-// callback for event listener whichuses a setTimeout and clearTimeout to make sure that the requests aren't made at every keypress in the input field.
-
-/*
-let timeoutId;
-const onInput = (event) => {
-	// if the id that the setTimeout returns is truthy, we stop the setTimeout till after the delay.
-
-	if (timeoutId) {
-		clearTimeout(timeoutId);
-	}
-	// setTimeout returns a timeout id whenever it is called. we save it
-	timeoutId = setTimeout(() => {
-		fetchData(event.target.value);
-	}, 1000);
-};
-*/
-
-const onInput = async (event) => {
-	const movies = await fetchData(event.target.value);
-
-	// if there is no movie, dropdown wo't be active and return early.
-	if (!movies.length) {
-		dropdown.classList.remove('is-active');
-		return;
-	}
-
-	//
-	results.innerHTML = '';
-	//make dropdown to be active when data is fetched.
-	dropdown.classList.add('is-active');
-	// iterate through the returned movie array.
-	for (let movie of movies) {
-		// create a div element
-		const option = document.createElement('a');
+createAutoComplete({
+	root: document.querySelector('.autocomplete'),
+	renderOption(movie) {
 		const imgSrc = movie.Poster === 'N/A' ? '' : movie.Poster;
-
-		// create the inner HTML of this div
-		option.classList.add('dropdown-item');
-		option.innerHTML = `
+		return `
             <img src="${imgSrc}"/>
-            ${movie.Title}
+            ${movie.Title} (${movie.Year})
         `;
+	},
+	onOptionSelect(movie) {
+		onMovieSelect(movie);
+	},
+	inputValue(movie) {
+		return `${movie.Title} ${movie.Year}`;
+	},
 
-		option.addEventListener('click', () => {
-			dropdown.classList.remove('is-active');
-			// closure scope of the function
-			input.value = movie.Title;
-			onMovieSelect(movie);
+	// function to fetch data from the movie api through axios which also format our search strings.
+
+	async fetchData(searchTerm) {
+		const response = await axios.get('https://omdbapi.com/', {
+			params: {
+				apikey: '7efb4270',
+				s: searchTerm
+			}
 		});
 
-		results.appendChild(option);
-	}
-};
+		// if the response has an error, return an empty array.
 
-// event listener for the html input with callback.
-input.addEventListener('input', debounce(onInput, 1500));
-
-// function to handle the closing of the widget when a click occurs outside the widget
-
-document.addEventListener('click', (event) => {
-	if (!root.contains(event.target)) {
-		dropdown.classList.remove('is-active');
+		if (response.data.Error) {
+			return [];
+		}
+		// if no error, return the Search response.
+		return response.data.Search;
 	}
 });
 
@@ -125,6 +62,23 @@ const movieTemplate = (movieDetail) => {
                     <p>${movieDetail.Plot}</p>
                 </div>
             </div>
+        </article>
+        <article class ="notification is-primary">
+            <p class="title">${movieDetail.Awards}</p>
+            <p class="subtitle">Awards</p>
+        </article>
+        <article class ="notification is-primary">
+            <p class="title">${movieDetail.BoxOffice}</p>
+            <p class="subtitle">Box Office</p>
+        </article><article class ="notification is-primary">
+            <p class="title">${movieDetail.Metascore}</p>
+            <p class="subtitle">Metascore</p>
+        </article><article class ="notification is-primary">
+            <p class="title">${movieDetail.imdbRating}</p>
+            <p class="subtitle">IMDB Rating</p>
+        </article><article class ="notification is-primary">
+            <p class="title">${movieDetail.imdbVotes}</p>
+            <p class="subtitle">IMDB Votes</p>
         </article>
     `;
 };
