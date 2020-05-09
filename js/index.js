@@ -52,17 +52,35 @@ const onInput = (event) => {
 const onInput = async (event) => {
 	const movies = await fetchData(event.target.value);
 
+	// if there is no movie, dropdown wo't be active and return early.
+	if (!movies.length) {
+		dropdown.classList.remove('is-active');
+		return;
+	}
+
+	//
+	results.innerHTML = '';
+	//make dropdown to be active when data is fetched.
 	dropdown.classList.add('is-active');
 	// iterate through the returned movie array.
-	for (movie of movies) {
+	for (let movie of movies) {
 		// create a div element
 		const option = document.createElement('a');
+		const imgSrc = movie.Poster === 'N/A' ? '' : movie.Poster;
 
 		// create the inner HTML of this div
+		option.classList.add('dropdown-item');
 		option.innerHTML = `
-            <img src="${movie.Poster}"/>
-            <h1>${movie.Title}</h1>
+            <img src="${imgSrc}"/>
+            ${movie.Title}
         `;
+
+		option.addEventListener('click', () => {
+			dropdown.classList.remove('is-active');
+			// closure scope of the function
+			input.value = movie.Title;
+			onMovieSelect(movie);
+		});
 
 		results.appendChild(option);
 	}
@@ -70,3 +88,43 @@ const onInput = async (event) => {
 
 // event listener for the html input with callback.
 input.addEventListener('input', debounce(onInput, 1500));
+
+// function to handle the closing of the widget when a click occurs outside the widget
+
+document.addEventListener('click', (event) => {
+	if (!root.contains(event.target)) {
+		dropdown.classList.remove('is-active');
+	}
+});
+
+// function to get a particular movie.
+
+const onMovieSelect = async (movie) => {
+	const response = await axios.get('https://omdbapi.com/', {
+		params: {
+			apikey: '7efb4270',
+			i: movie.imdbID
+		}
+	});
+
+	document.querySelector('#summary').innerHTML = movieTemplate(response.data);
+};
+
+const movieTemplate = (movieDetail) => {
+	return `
+        <article class="media">
+            <figure class=""media-left>
+                <p class="image">
+                    <img src="${movieDetail.Poster}" />
+                </p>
+            </figure>
+            <div class="media-content">
+                <div class="content">
+                    <h1>${movieDetail.Title}</h1>
+                    <h4>${movieDetail.Title}</h4>
+                    <p>${movieDetail.Plot}</p>
+                </div>
+            </div>
+        </article>
+    `;
+};
