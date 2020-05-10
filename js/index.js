@@ -72,7 +72,27 @@ const onMovieSelect = async (movie, elementForSummary, side) => {
 
 // function to compare the stats of both sides.
 const runComparison = () => {
-	console.log('time for comparison');
+	const leftSideStats = document.querySelectorAll('#left-summary .notification');
+
+	const rightSideStats = document.querySelectorAll('#right-summary .notification');
+
+	leftSideStats.forEach((leftStat, index) => {
+		const rightStat = rightSideStats[index];
+
+		const leftSideValue = parseInt(leftStat.dataset.value);
+		const rightSideValue = parseInt(rightStat.dataset.value);
+
+		if (isNaN(rightSideValue) || isNaN(leftSideValue) || rightSideValue === leftSideValue) {
+			leftStat.classList.add('is-primary');
+			rightStat.classList.add('is-primary');
+		} else if (rightSideValue > leftSideValue) {
+			leftStat.classList.remove('is-primary');
+			leftStat.classList.add('is-warning');
+		} else {
+			rightStat.classList.remove('is-primary');
+			rightStat.classList.add('is-warning');
+		}
+	});
 };
 
 const movieTemplate = (movieDetail) => {
